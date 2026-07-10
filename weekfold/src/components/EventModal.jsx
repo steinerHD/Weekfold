@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { addDoc, collection, deleteDoc, doc, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { db } from '../firebase'
+import ConfirmCard from './ConfirmCard.jsx'
 import { formatDayLabel, isSameDay } from '../utils/dateUtils'
 import { PALETTE, DEFAULT_COLOR } from '../utils/palette'
+import { useAuth } from '../context/AuthContext.jsx'
 
 const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
@@ -14,6 +16,7 @@ function toDateInputValue(date) {
 
 export default function EventModal({ calendarId, days, initialEvent, canEdit, onClose }) {
   const isNew = !initialEvent?.id
+  const { currentUser, profile } = useAuth()
 
   const [title, setTitle] = useState(initialEvent?.title || '')
   const [selectedDay, setSelectedDay] = useState(
@@ -33,6 +36,7 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
   )
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   function buildDate(day, hour, min) {
     const d = new Date(day)
@@ -85,7 +89,12 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
       onClose()
     } finally {
       setBusy(false)
+      setShowDeleteConfirm(false)
     }
+  }
+
+  function openDeleteConfirm() {
+    setShowDeleteConfirm(true)
   }
 
   const selectClass =
@@ -246,7 +255,12 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
 
           <div className="flex justify-between items-center pt-1">
             {!isNew && canEdit ? (
-              <button type="button" onClick={handleDelete} disabled={busy} className="text-sm text-coral hover:underline">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={busy}
+                className="text-sm text-coral hover:underline"
+              >
                 Eliminar
               </button>
             ) : (
@@ -269,6 +283,18 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
           </div>
         </form>
       </div>
+      {showDeleteConfirm && (
+        <ConfirmCard
+          title="Eliminar evento"
+          description={`Estás a punto de eliminar el evento “${title || 'Sin título'}”. Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          cancelLabel="Cancelar"
+          danger
+          loading={busy}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDelete}
+        />
+      )}
     </div>
   )
 }

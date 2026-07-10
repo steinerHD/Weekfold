@@ -72,25 +72,25 @@ export default function ShareModal({ calendar, onClose }) {
         </div>
         <p className="text-sm text-ink/50 mb-4">Busca por nombre de usuario dentro de weekfold.</p>
 
-        <form onSubmit={handleSearch} className="flex gap-2 mb-3">
+        <form onSubmit={handleSearch} className="grid gap-3 mb-3 sm:grid-cols-[1fr_auto_auto]">
           <input
             type="text"
             placeholder="username"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 rounded-lg border border-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo"
+            className="min-w-0 w-full rounded-lg border border-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo"
           />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="rounded-lg border border-line px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo"
+            className="min-w-0 w-full rounded-lg border border-line px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo sm:w-auto"
           >
             <option value="viewer">Ver</option>
             <option value="editor">Editar</option>
           </select>
           <button
             type="submit"
-            className="text-sm font-medium bg-indigo text-white rounded-lg px-4 hover:bg-indigo/90 transition"
+            className="w-full sm:w-auto text-sm font-medium bg-indigo text-white rounded-lg px-4 py-2 hover:bg-indigo/90 transition"
           >
             Buscar
           </button>

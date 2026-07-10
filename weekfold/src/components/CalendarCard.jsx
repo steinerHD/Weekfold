@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { doc, getDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, getDocs, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
+import ConfirmCard from './ConfirmCard.jsx'
 import { DEFAULT_COLOR } from '../utils/palette'
 
 const ROLE_LABEL = { viewer: 'solo ver', editor: 'puede editar' }
@@ -45,31 +46,100 @@ function SharedBy({ ownerId }) {
 export default function CalendarCard({ calendar, shared, viewerUid }) {
   const color = calendar.color || DEFAULT_COLOR
   const role = calendar.members?.[viewerUid]
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const isOwner = calendar.ownerId === viewerUid
+
+  function requestDelete(e) {
+    e.preventDefault()
+    e.stopPropagation()
+    setShowDeleteConfirm(true)
+  }
+
+  async function confirmDelete() {
+    setDeleting(true)
+    try {
+      const eventsRef = collection(db, 'calendars', calendar.id, 'events')
+      const eventsSnap = await getDocs(eventsRef)
+      const batch = writeBatch(db)
+
+      eventsSnap.forEach((snapshot) => {
+        batch.delete(snapshot.ref)
+      })
+
+      batch.delete(doc(db, 'calendars', calendar.id))
+      await batch.commit()
+    } catch (err) {
+      window.alert('No se pudo eliminar el calendario.')
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
 
   return (
-    <Link
-      to={`/calendar/${calendar.id}`}
-      style={{ borderLeftColor: color }}
-      className="block rounded-xl border border-line border-l-[3px] bg-white p-4 hover:shadow-sm transition"
-    >
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-        {shared && role && (
-          <span
-            className="text-[11px] font-medium px-2 py-0.5 rounded-full"
-            style={{
-              backgroundColor: role === 'editor' ? '#F1EBFE' : '#FDE7E1',
-              color: role === 'editor' ? '#8B5CF6' : '#F0653E',
-            }}
+    <div className="relative">
+      <Link
+        to={`/calendar/${calendar.id}`}
+        style={{ borderLeftColor: color }}
+        className="block rounded-xl border border-line border-l-[3px] bg-white p-4 hover:shadow-sm transition pr-3 sm:pr-12"
+      >
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+          {shared && role && (
+            <span
+              className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: role === 'editor' ? '#F1EBFE' : '#FDE7E1',
+                color: role === 'editor' ? '#8B5CF6' : '#F0653E',
+              }}
+            >
+              {ROLE_LABEL[role]}
+            </span>
+          )}
+        </div>
+
+        <h3 className="font-semibold text-ink mt-2 truncate text-sm sm:text-base">{calendar.name}</h3>
+
+        {shared ? <SharedBy ownerId={calendar.ownerId} /> : <AccessLabel calendar={calendar} />}
+      </Link>
+
+      {isOwner && (
+        <>
+          <button
+            type="button"
+            onClick={requestDelete}
+            disabled={deleting}
+            className="hidden sm:inline-block absolute top-3 right-3 text-xs text-coral hover:text-coral/80 disabled:opacity-50"
           >
-            {ROLE_LABEL[role]}
-          </span>
-        )}
-      </div>
+            {deleting ? 'Borrando…' : 'Eliminar'}
+          </button>
 
-      <h3 className="font-semibold text-ink mt-2">{calendar.name}</h3>
+          <div className="sm:hidden mt-2">
+            <button
+              type="button"
+              onClick={requestDelete}
+              disabled={deleting}
+              className="w-full text-sm text-coral text-left hover:underline disabled:opacity-50"
+            >
+              {deleting ? 'Borrando…' : 'Eliminar calendario'}
+            </button>
+          </div>
+        </>
+      )}
 
-      {shared ? <SharedBy ownerId={calendar.ownerId} /> : <AccessLabel calendar={calendar} />}
-    </Link>
+      {showDeleteConfirm && (
+        <ConfirmCard
+          title="Eliminar calendario"
+          description={`Estás a punto de eliminar “${calendar.name}”. Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          cancelLabel="Cancelar"
+          danger
+          loading={deleting}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={confirmDelete}
+        />
+      )}
+    </div>
   )
 }

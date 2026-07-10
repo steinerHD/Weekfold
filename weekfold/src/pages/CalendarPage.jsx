@@ -1,50 +1,68 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { doc, onSnapshot, collection, query } from 'firebase/firestore'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { collection, doc, getDocs, onSnapshot, query, writeBatch } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext.jsx'
 import WeekView from '../components/WeekView.jsx'
 import EventModal from '../components/EventModal.jsx'
 import ShareModal from '../components/ShareModal.jsx'
+import ConfirmCard from '../components/ConfirmCard.jsx'
 import { getWeekDays, shiftWeek, formatWeekRange, expandEventsForWeek } from '../utils/dateUtils'
 import { DEFAULT_COLOR } from '../utils/palette'
 
 export default function CalendarPage() {
   const { calendarId } = useParams()
   const { currentUser } = useAuth()
+  const navigate = useNavigate()
 
   const [calendar, setCalendar] = useState(null)
   const [masterEvents, setMasterEvents] = useState([])
   const [anchorDate, setAnchorDate] = useState(new Date())
   const [activeEvent, setActiveEvent] = useState(null)
   const [showShare, setShowShare] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletingCalendar, setDeletingCalendar] = useState(false)
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, 'calendars', calendarId), (snap) => {
-      setCalendar(snap.exists() ? { id: snap.id, ...snap.data() } : null)
-    })
+    const unsub = onSnapshot(
+      doc(db, 'calendars', calendarId),
+      (snap) => {
+        setCalendar(snap.exists() ? { id: snap.id, ...snap.data() } : null)
+      },
+      (err) => {
+        console.warn('Calendar snapshot error', err)
+        setCalendar(null)
+      },
+    )
     return unsub
   }, [calendarId])
 
   useEffect(() => {
     const q = query(collection(db, 'calendars', calendarId, 'events'))
-    const unsub = onSnapshot(q, (snap) => {
-      setMasterEvents(
-        snap.docs.map((d) => {
-          const data = d.data()
-          return {
-            id: d.id,
-            ...data,
-            start: data.start.toDate(),
-            end: data.end.toDate(),
-            recurrence: {
-              enabled: Boolean(data.recurrence?.enabled),
-              until: data.recurrence?.until ? data.recurrence.until.toDate() : null,
-            },
-          }
-        }),
-      )
-    })
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setMasterEvents(
+          snap.docs.map((d) => {
+            const data = d.data()
+            return {
+              id: d.id,
+              ...data,
+              start: data.start.toDate(),
+              end: data.end.toDate(),
+              recurrence: {
+                enabled: Boolean(data.recurrence?.enabled),
+                until: data.recurrence?.until ? data.recurrence.until.toDate() : null,
+              },
+            }
+          }),
+        )
+      },
+      (err) => {
+        console.warn('Events snapshot error', err)
+        setMasterEvents([])
+      },
+    )
     return unsub
   }, [calendarId])
 
@@ -77,54 +95,96 @@ export default function CalendarPage() {
     setActiveEvent({ start, end })
   }
 
+  async function handleDeleteCalendar() {
+    setDeletingCalendar(true)
+    try {
+      const eventsRef = collection(db, 'calendars', calendarId, 'events')
+      const eventsSnap = await getDocs(eventsRef)
+      const batch = writeBatch(db)
+
+      eventsSnap.forEach((snapshot) => {
+        batch.delete(snapshot.ref)
+      })
+
+      batch.delete(doc(db, 'calendars', calendarId))
+      await batch.commit()
+      navigate('/')
+    } catch (err) {
+      window.alert('No se pudo eliminar el calendario.')
+    } finally {
+      setDeletingCalendar(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-paper">
       <header className="bg-white border-b border-line">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-sm text-ink/40 hover:text-ink flex items-center gap-1.5">
-              <span className="text-base">‹</span> Calendarios
+            <Link
+              to="/"
+              className="text-2xl text-ink/60 hover:text-ink"
+              aria-label="Volver a calendarios"
+            >
+              ‹
             </Link>
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
-            <span className="font-display italic font-semibold text-ink">{calendar.name}</span>
+            <span className="text-sm font-semibold text-ink truncate max-w-[200px]">{calendar.name}</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setAnchorDate((d) => shiftWeek(d, -1))}
-              className="w-8 h-8 rounded-md hover:bg-paper text-ink/50 transition"
+              className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-ink hover:border-ink transition"
+              aria-label="Semana anterior"
             >
               ‹
             </button>
             <button
               onClick={() => setAnchorDate(new Date())}
-              className="text-sm font-medium text-indigo px-2 hover:underline"
+              className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-ink hover:border-ink transition"
+              aria-label="Hoy"
             >
-              Hoy
+              •
             </button>
             <button
               onClick={() => setAnchorDate((d) => shiftWeek(d, 1))}
-              className="w-8 h-8 rounded-md hover:bg-paper text-ink/50 transition"
+              className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-ink hover:border-ink transition"
+              aria-label="Semana siguiente"
             >
               ›
             </button>
-            <span className="text-sm font-mono text-ink/60 w-40 text-center">{formatWeekRange(days)}</span>
-
+            <span className="hidden sm:inline text-xs font-mono text-ink/60 w-40 text-center truncate">{formatWeekRange(days)}</span>
             <button
               onClick={handleNewEventClick}
               disabled={!canEdit}
-              className="text-sm font-medium bg-indigo text-white rounded-lg px-4 py-2 hover:bg-indigo/90 disabled:opacity-40 transition ml-2"
+              className="w-9 h-9 rounded-md bg-indigo text-white flex items-center justify-center hover:bg-indigo/90 disabled:opacity-40 transition"
+              aria-label="Nuevo evento"
             >
-              + Evento
+              +
             </button>
-
             {isOwner && (
-              <button
-                onClick={() => setShowShare(true)}
-                className="text-sm font-medium border border-line rounded-lg px-4 py-2 hover:border-indigo hover:text-indigo transition"
-              >
-                Compartir
-              </button>
+              <>
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-indigo hover:border-indigo transition flex items-center justify-center"
+                  aria-label="Compartir calendario"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-9 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm9 6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-9 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm3-1.5l6-3.5M9 10.5l6-3.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={deletingCalendar}
+                  className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-coral hover:border-coral transition flex items-center justify-center"
+                  aria-label="Eliminar calendario"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6v12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </>
             )}
           </div>
         </div>
@@ -150,6 +210,18 @@ export default function CalendarPage() {
       )}
 
       {showShare && isOwner && <ShareModal calendar={calendar} onClose={() => setShowShare(false)} />}
+      {showDeleteConfirm && (
+        <ConfirmCard
+          title="Eliminar calendario"
+          description={`Estás a punto de eliminar “${calendar.name}”. Esta acción no se puede deshacer.`}
+          confirmLabel="Eliminar"
+          cancelLabel="Cancelar"
+          danger
+          loading={deletingCalendar}
+          onCancel={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteCalendar}
+        />
+      )}
     </div>
   )
 }

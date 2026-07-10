@@ -1,0 +1,12 @@
+{
+  "name": "weekfold-functions",
+  "description": "Funciones Cloud para Weekfold",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "firebase-admin": "^11.0.1",
+    "firebase-functions": "^4.6.0",
+    "nodemailer": "^6.9.2"
+  }
+}

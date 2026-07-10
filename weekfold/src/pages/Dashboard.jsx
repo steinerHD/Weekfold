@@ -25,7 +25,7 @@ export default function Dashboard() {
             <p className="text-sm text-ink/50 mb-6">Crea el primero para empezar a organizar tu semana.</p>
             <button
               onClick={() => setShowCreate(true)}
-              className="bg-indigo text-white text-sm font-medium rounded-lg px-5 py-2.5 hover:bg-indigo/90 transition"
+              className="bg-indigo text-white text-sm font-medium rounded-lg px-5 py-2.5 hover:bg-indigo/90 transition block w-full sm:inline-block sm:w-auto"
             >
               Crear mi primer calendario
             </button>

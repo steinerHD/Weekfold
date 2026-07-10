@@ -15,10 +15,17 @@ export function useCalendars() {
       where('memberIds', 'array-contains', currentUser.uid),
       orderBy('createdAt', 'desc'),
     )
-    const unsub = onSnapshot(q, (snap) => {
-      setCalendars(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-      setLoading(false)
-    })
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        setCalendars(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
+        setLoading(false)
+      },
+      (err) => {
+        console.warn('useCalendars onSnapshot error', err)
+        setLoading(false)
+      },
+    )
     return unsub
   }, [currentUser])
 

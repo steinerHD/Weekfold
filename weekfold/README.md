@@ -1,53 +1,84 @@
-# weekfold
+# Weekfold
 
-Calendarios semanales por usuario, compartibles entre cuentas. React + Vite + Firebase (Auth + Firestore).
+Weekfold es una aplicación web para gestionar calendarios semanales de forma colaborativa. Permite crear calendarios compartidos, organizar eventos por día, invitar a otros usuarios y recibir recordatorios basados en notificaciones del navegador.
 
-## Crear el repositorio
+## Qué hace el proyecto
 
-```bash
-cd weekfold
-git init
-git add .
-git commit -m "scaffold inicial de weekfold"
-gh repo create weekfold --public --source=. --remote=origin --push
+- Registro e inicio de sesión con Firebase Authentication.
+- Creación de calendarios personales o compartidos.
+- Gestión de eventos por día y por semana.
+- Compartición de calendarios con otros usuarios.
+- Recordatorios locales mediante notificaciones del navegador.
+- Interfaz moderna construida con React, Vite y Tailwind CSS.
+
+## Tecnologías utilizadas
+
+- React 18
+- Vite
+- Tailwind CSS
+- Firebase Auth
+- Firestore
+- date-fns
+
+## Estructura del proyecto
+
+- src/components: componentes reutilizables como navbar, modal de eventos, modal de compartir y vista semanal.
+- src/pages: pantallas principales de autenticación, dashboard y calendario.
+- src/context: contexto de autenticación.
+- src/hooks: lógica reutilizable para cargar calendarios.
+- src/utils: utilidades para notificaciones y paletas.
+- functions: funciones backend de Firebase, si se requieren para extensiones futuras.
+
+## Requisitos previos
+
+- Node.js 18 o superior
+- npm
+- Una cuenta de Firebase con proyecto creado
+
+## Configuración de Firebase
+
+1. Crea un proyecto en Firebase Console.
+2. Activa Authentication con el método Email/Password.
+3. Crea una base de datos Firestore.
+4. Crea un archivo .env en la raíz del proyecto con las siguientes variables:
+
+```env
+VITE_FIREBASE_API_KEY=tu_api_key
+VITE_FIREBASE_AUTH_DOMAIN=tu_auth_domain
+VITE_FIREBASE_PROJECT_ID=tu_project_id
+VITE_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=tu_messaging_sender_id
+VITE_FIREBASE_APP_ID=tu_app_id
 ```
 
-Si no tienes `gh` CLI autenticado, crea el repo vacío en github.com/new y luego:
+5. Si deseas desplegar reglas e índices de Firestore, puedes usar Firebase CLI.
 
-```bash
-git remote add origin https://github.com/TU_USUARIO/weekfold.git
-git branch -M main
-git push -u origin main
-```
-
-## Configurar Firebase
-
-1. Crea un proyecto en https://console.firebase.google.com
-2. Habilita **Authentication → Email/Password**
-3. Crea una base de datos **Firestore** (modo producción)
-4. Copia la config web (Project Settings → tus apps → SDK config) a un archivo `.env` basado en `.env.example`
-5. Despliega las reglas e índices:
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init firestore   # selecciona tu proyecto, usa los archivos existentes
-firebase deploy --only firestore:rules,firestore:indexes
-```
-
-## Correr localmente
+## Instalación
 
 ```bash
 npm install
+```
+
+## Ejecución local
+
+```bash
 npm run dev
 ```
 
-## Qué falta por decisión de alcance (v1)
+## Construcción para producción
 
-- No hay recuperación de contraseña ni verificación de email.
-- Los eventos no son recurrentes (no hay "repetir cada semana").
-- El nombre visible de un colaborador en "Compartir" muestra el UID recortado, no el username — falta un lookup adicional a `users/{uid}` por cada miembro.
-- Zona horaria: se usa la hora local del navegador, no hay soporte multi-timezone.
-- Eliminar un calendario completo (no solo eventos) no tiene UI todavía.
+```bash
+npm run build
+```
 
-Dime cuál de estos priorizamos en la siguiente iteración.
+## Flujo de uso
+
+1. Inicia sesión o crea una cuenta.
+2. Crea un calendario nuevo.
+3. Añade eventos en la vista semanal.
+4. Comparte el calendario con otros usuarios si lo deseas.
+5. Activa las notificaciones del navegador para recibir recordatorios.
+
+## Estado actual
+
+El proyecto ya incluye la base funcional para trabajar con calendarios compartidos, eventos y recordatorios, y está listo para seguir expandiéndose con nuevas mejoras como repetición de eventos, recuperación de contraseña y más opciones de colaboración.
