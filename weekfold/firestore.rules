@@ -1,0 +1,59 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isMember(calendarData) {
+      return isSignedIn() && request.auth.uid in calendarData.memberIds;
+    }
+
+    function isOwner(calendarData) {
+      return isSignedIn() && request.auth.uid == calendarData.ownerId;
+    }
+
+    function role(calendarData) {
+      return calendarData.members[request.auth.uid];
+    }
+
+    function canEditEvents(calendarData) {
+      return isOwner(calendarData) || role(calendarData) == 'editor';
+    }
+
+    // Perfiles de usuario: cualquiera autenticado puede leer (necesario para
+    // buscar por username al compartir), solo el dueño puede escribir el suyo.
+    match /users/{uid} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if isSignedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // Reserva de username: lectura pública (para chequear disponibilidad),
+    // solo se crea una vez, nunca se reasigna a otro uid.
+    match /usernames/{username} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /calendars/{calendarId} {
+      allow read: if isMember(resource.data);
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+
+      // Solo el dueño puede modificar nombre/miembros del calendario.
+      allow update: if isOwner(resource.data);
+      allow delete: if isOwner(resource.data);
+
+      match /events/{eventId} {
+        allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
+        allow create, update, delete: if canEditEvents(
+          get(/databases/$(database)/documents/calendars/$(calendarId)).data
+        );
+      }
+    }
+  }
+}
