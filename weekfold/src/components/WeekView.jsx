@@ -1,7 +1,5 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { HOURS, isSameDay } from '../utils/dateUtils'
-
-import { useState } from 'react'
 
 // Defaults; will be adapted on mount/resize for small screens
 const DEFAULT_HOUR_HEIGHT = 52
@@ -54,91 +52,99 @@ export default function WeekView({ days, events, onSlotClick, onEventClick }) {
 
   return (
     <div className="border border-line rounded-xl bg-white overflow-hidden text-[12px] sm:text-sm">
-      <div className="flex border-b border-line">
-        <div className="w-10 sm:w-14 flex-shrink-0" />
-        <div className="grid grid-cols-7 flex-1">
-          {days.map((day) => {
-            const isToday = isSameDay(day, today)
-            return (
-              <div
-                key={day.toISOString()}
-                className="h-14 border-l border-line first:border-l-0 flex flex-col items-center justify-center gap-0.5"
-              >
-                <span className="text-[10px] font-mono uppercase tracking-wide text-ink/40">
-                  {day.toLocaleDateString('es', { weekday: 'short' }).replace('.', '')}
-                </span>
-                {isToday ? (
-                  <span className="w-6 h-6 rounded-full bg-indigo text-white text-xs font-semibold flex items-center justify-center">
-                    {day.getDate()}
-                  </span>
-                ) : (
-                  <span className="text-sm font-semibold text-ink">{day.getDate()}</span>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div ref={bodyRef} className="flex overflow-y-auto" style={{ maxHeight: bodyHeight }}>
-        <div className="w-10 sm:w-14 flex-shrink-0 border-r border-line">
-          {HOURS.map((h) => (
-            <div
-              key={h}
-              style={{ height: hourHeight }}
-              className="font-mono text-ink/35 text-right pr-1 sm:pr-2 -mt-2 relative"
-            >
-              {h > 0 && <span className="absolute right-1 sm:right-2 text-[10px]">{String(h).padStart(2, '0')}:00</span>}
+      <div ref={bodyRef} className="overflow-auto" style={{ maxHeight: bodyHeight }}>
+        <div className="min-w-[420px] sm:min-w-0">
+          <div className="sticky top-0 z-20 grid grid-cols-[2.5rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_minmax(0,1fr)] border-b border-line bg-white">
+            <div className="border-r border-line" />
+            <div className="grid grid-cols-7">
+              {days.map((day) => {
+                const isToday = isSameDay(day, today)
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className="h-14 border-l border-line first:border-l-0 flex flex-col items-center justify-center gap-0.5"
+                  >
+                    <span className="text-[10px] font-mono uppercase tracking-wide text-ink/40">
+                      {day.toLocaleDateString('es', { weekday: 'short' }).replace('.', '')}
+                    </span>
+                    {isToday ? (
+                      <span className="w-6 h-6 rounded-full bg-indigo text-white text-xs font-semibold flex items-center justify-center">
+                        {day.getDate()}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-semibold text-ink">{day.getDate()}</span>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-          ))}
-        </div>
+          </div>
 
-        <div className="grid grid-cols-7 flex-1">
-          {days.map((day) => {
-            const dayEvents = events.filter((ev) => isSameDay(ev.start, day))
-            return (
-              <div key={day.toISOString()} className="border-l border-line first:border-l-0 relative">
-                <div className="relative" style={{ height: hourHeight * 24 }}>
-                  {HOURS.map((h) => (
-                    <div
-                      key={h}
-                      onClick={() => onSlotClick(day, h)}
-                      style={{ height: hourHeight }}
-                      className="border-b border-line/60 hover:bg-indigo-soft/40 cursor-pointer"
-                    />
-                  ))}
-
-                  {dayEvents.map((ev) => {
-                    const color = ev.color || '#4F46E5'
-                      const top = (toMinutes(ev.start) / 60) * hourHeight
-                      const height = Math.max(((toMinutes(ev.end) - toMinutes(ev.start)) / 60) * hourHeight, 18)
-                    return (
-                      <button
-                        key={ev.id + ev.start.toISOString()}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEventClick(ev)
-                        }}
-                        style={{
-                          top,
-                          height,
-                          backgroundColor: withAlpha(color, '1A'),
-                          borderLeft: `3px solid ${color}`,
-                          color,
-                        }}
-                        className="absolute left-1 right-1 rounded-md px-2 py-1 text-left text-[10px] sm:text-[11px] overflow-hidden hover:brightness-95"
-                      >
-                        <span className="font-semibold block truncate">{ev.title}</span>
-                        <span className="font-mono opacity-70 block truncate">
-                          {ev.start.toLocaleTimeString('es', { hour: 'numeric', minute: '2-digit' })}
-                        </span>
-                      </button>
-                    )
-                  })}
+          <div className="grid grid-cols-[2.5rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_minmax(0,1fr)]">
+            <div className="border-r border-line bg-white">
+              {HOURS.map((h) => (
+                <div key={h} style={{ height: hourHeight }} className="relative font-mono text-ink/35 text-right">
+                  {h > 0 && (
+                    <span className="absolute -top-2 right-1 sm:right-2 text-[10px] leading-none">
+                      {String(h).padStart(2, '0')}:00
+                    </span>
+                  )}
                 </div>
-              </div>
-            )
-          })}
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 min-w-0">
+              {days.map((day) => {
+                const dayEvents = events.filter((ev) => isSameDay(ev.start, day))
+                return (
+                  <div key={day.toISOString()} className="border-l border-line first:border-l-0 relative">
+                    <div className="relative" style={{ height: hourHeight * 24 }}>
+                      {HOURS.map((h) => (
+                        <div
+                          key={h}
+                          onClick={() => onSlotClick(day, h)}
+                          style={{ height: hourHeight }}
+                          className="border-b border-line/60 hover:bg-indigo-soft/40 cursor-pointer"
+                        />
+                      ))}
+
+                      {dayEvents.map((ev) => {
+                        const color = ev.color || '#4F46E5'
+                        const top = (toMinutes(ev.start) / 60) * hourHeight
+                        const height = Math.max(((toMinutes(ev.end) - toMinutes(ev.start)) / 60) * hourHeight, 18)
+                        return (
+                          <button
+                            key={ev.id + ev.start.toISOString()}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEventClick(ev)
+                            }}
+                            style={{
+                              top,
+                              height,
+                              backgroundColor: withAlpha(color, '1A'),
+                              borderLeft: `3px solid ${color}`,
+                              color,
+                            }}
+                            className="absolute left-1 right-1 rounded-md px-2 py-1 text-left text-[10px] sm:text-[11px] overflow-hidden hover:brightness-95"
+                          >
+                            <span className="font-semibold block truncate">{ev.title}</span>
+                            <span className="font-mono opacity-70 block truncate">
+                              {ev.start.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true,
+                              })}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       </div>
     </div>

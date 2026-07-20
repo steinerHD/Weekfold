@@ -5,7 +5,7 @@ import CreateCalendarModal from '../components/CreateCalendarModal.jsx'
 import { useCalendars } from '../hooks/useCalendars.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
-export default function Dashboard() {
+export default function Dashboard({ isDark, onToggleTheme }) {
   const { currentUser } = useAuth()
   const { mine, sharedWithMe, loading } = useCalendars()
   const [showCreate, setShowCreate] = useState(false)
@@ -14,7 +14,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-paper">
-      <Navbar onNewCalendar={() => setShowCreate(true)} />
+      <Navbar onNewCalendar={() => setShowCreate(true)} isDark={isDark} onToggleTheme={onToggleTheme} />
 
       <main className="max-w-6xl mx-auto px-6 py-10">
         {loading ? (

@@ -14,3 +14,65 @@ body {
 * {
   scrollbar-width: thin;
 }
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body,
+html.dark .bg-paper {
+  background-color: #111827;
+  color: #F9FAFB;
+}
+
+html.dark .bg-white {
+  background-color: #1F2937;
+}
+
+html.dark .bg-paper\/60,
+html.dark .bg-white\/60 {
+  background-color: #1F2937;
+}
+
+html.dark .border-line,
+html.dark .border-line\/60 {
+  border-color: #374151;
+}
+
+html.dark .text-ink {
+  color: #F9FAFB;
+}
+
+html.dark .text-ink\/30 { color: rgb(249 250 251 / 0.3); }
+html.dark .text-ink\/35 { color: rgb(249 250 251 / 0.35); }
+html.dark .text-ink\/40 { color: rgb(249 250 251 / 0.4); }
+html.dark .text-ink\/45 { color: rgb(249 250 251 / 0.45); }
+html.dark .text-ink\/50 { color: rgb(249 250 251 / 0.5); }
+html.dark .text-ink\/60 { color: rgb(249 250 251 / 0.6); }
+html.dark .text-ink\/70 { color: rgb(249 250 251 / 0.7); }
+
+html.dark input:not([type='checkbox']),
+html.dark select,
+html.dark textarea {
+  background-color: #111827;
+  color: #F9FAFB;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #9CA3AF;
+}
+
+html.dark select option {
+  background-color: #1F2937;
+  color: #F9FAFB;
+}
+
+html.dark .hover\:bg-paper:hover,
+html.dark .hover\:bg-line:hover {
+  background-color: #374151;
+}
+
+html.dark .focus\:bg-white:focus {
+  background-color: #111827;
+}

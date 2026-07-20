@@ -58,14 +58,15 @@ export default function CreateCalendarModal({ onClose }) {
 
           <div>
             <label className="block text-sm font-medium text-ink mb-2">Color</label>
-            <div className="flex gap-2.5">
+            <div className="flex flex-wrap gap-2.5">
               {PALETTE.map((c) => (
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => setColor(c.hex)}
-                  style={{ backgroundColor: c.hex }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center ring-offset-2 transition"
+                    onClick={() => setColor(c.hex)}
+                    style={{ backgroundColor: c.hex }}
+                    className="w-7 h-7 rounded-full flex items-center justify-center ring-offset-2 transition"
+                    aria-label={`Usar color ${c.id}`}
                 >
                   {color === c.hex && (
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
