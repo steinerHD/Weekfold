@@ -18,14 +18,16 @@ export default function Navbar({ onNewCalendar, isDark, onToggleTheme }) {
 
   return (
     <header className="bg-white border-b border-line">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-12 sm:h-16 flex items-center justify-between">
-        <Logo />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-12 sm:h-16 flex items-center justify-between gap-2">
+        <div className="flex-shrink-0">
+          <Logo />
+        </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-1 sm:gap-3">
           <button
             type="button"
             onClick={onToggleTheme}
-            className="inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-ink/60 hover:bg-paper hover:text-ink transition"
+            className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-sm font-medium text-ink/60 hover:bg-paper hover:text-ink transition sm:h-auto sm:w-auto sm:gap-2 sm:px-2.5 sm:py-2"
             aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
             title={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
           >
@@ -58,7 +60,7 @@ export default function Navbar({ onNewCalendar, isDark, onToggleTheme }) {
             </svg>
           </button>
 
-          <div className="w-px h-6 bg-line" />
+          <div className="hidden sm:block w-px h-6 bg-line" />
 
           <button
             onClick={handleLogout}
@@ -76,7 +78,7 @@ export default function Navbar({ onNewCalendar, isDark, onToggleTheme }) {
             </svg>
           </button>
 
-          <div className="w-8 h-8 rounded-full bg-indigo text-white text-xs font-semibold flex items-center justify-center">
+          <div className="hidden sm:flex w-8 h-8 rounded-full bg-indigo text-white text-xs font-semibold items-center justify-center">
             {initialsOf(profile?.usernameDisplay || profile?.username)}
           </div>
         </div>

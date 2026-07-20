@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { collection, query, where, orderBy, limit, getDocs, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { collection, query, where, orderBy, limit, getDocs, doc, updateDoc, arrayUnion, arrayRemove, deleteField } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -9,28 +9,40 @@ export default function ShareModal({ calendar, onClose }) {
   const [results, setResults] = useState([])
   const [role, setRole] = useState('viewer')
   const [busyUid, setBusyUid] = useState(null)
+  const [searching, setSearching] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
   const [error, setError] = useState('')
 
   const members = calendar.members || {}
-  const memberUids = Object.keys(members).filter((uid) => uid !== calendar.ownerId)
+  const memberUids = Object.keys(members).filter((uid) => uid !== calendar.ownerId && Boolean(members[uid]))
 
   async function handleSearch(e) {
     e.preventDefault()
     setError('')
-    const term = search.trim().toLowerCase()
+    const term = search.trim().toLowerCase().replace(/^@/, '')
     if (!term) return
-    const q = query(
-      collection(db, 'users'),
-      orderBy('username'),
-      where('username', '>=', term),
-      where('username', '<=', term + '\uf8ff'),
-      limit(8),
-    )
-    const snap = await getDocs(q)
-    const found = snap.docs
-      .map((d) => ({ uid: d.id, ...d.data() }))
-      .filter((u) => u.uid !== currentUser.uid && !memberUids.includes(u.uid) && u.uid !== calendar.ownerId)
-    setResults(found)
+    setSearching(true)
+    setHasSearched(true)
+    try {
+      const usersQuery = query(
+        collection(db, 'users'),
+        orderBy('username'),
+        where('username', '>=', term),
+        where('username', '<=', term + '\uf8ff'),
+        limit(8),
+      )
+      const snap = await getDocs(usersQuery)
+      const found = snap.docs
+        .map((d) => ({ uid: d.id, ...d.data() }))
+        .filter((u) => u.uid !== currentUser.uid && !memberUids.includes(u.uid) && u.uid !== calendar.ownerId)
+      setResults(found)
+    } catch (err) {
+      console.warn('Share search error', err)
+      setResults([])
+      setError('No se pudo buscar usuarios. Inténtalo de nuevo.')
+    } finally {
+      setSearching(false)
+    }
   }
 
   async function handleAdd(uid) {
@@ -54,8 +66,11 @@ export default function ShareModal({ calendar, onClose }) {
     try {
       await updateDoc(doc(db, 'calendars', calendar.id), {
         memberIds: arrayRemove(uid),
-        [`members.${uid}`]: null,
+        [`members.${uid}`]: deleteField(),
       })
+    } catch (err) {
+      console.warn('Remove shared member error', err)
+      setError('No se pudo quitar el acceso. Inténtalo de nuevo.')
     } finally {
       setBusyUid(null)
     }
@@ -63,10 +78,10 @@ export default function ShareModal({ calendar, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto p-4 sm:p-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="font-display italic text-xl font-semibold text-ink">Compartir "{calendar.name}"</h2>
-          <button onClick={onClose} className="text-ink/40 hover:text-ink">
+          <h2 className="min-w-0 pr-3 font-display italic text-xl font-semibold text-ink truncate">Compartir "{calendar.name}"</h2>
+          <button onClick={onClose} className="flex-shrink-0 text-ink/40 hover:text-ink" aria-label="Cerrar">
             ✕
           </button>
         </div>
@@ -90,9 +105,10 @@ export default function ShareModal({ calendar, onClose }) {
           </select>
           <button
             type="submit"
+            disabled={searching}
             className="w-full sm:w-auto text-sm font-medium bg-indigo text-white rounded-lg px-4 py-2 hover:bg-indigo/90 transition"
           >
-            Buscar
+            {searching ? 'Buscando…' : 'Buscar'}
           </button>
         </form>
 
@@ -100,17 +116,20 @@ export default function ShareModal({ calendar, onClose }) {
 
         <div className="space-y-1 mb-4 max-h-40 overflow-y-auto">
           {results.map((u) => (
-            <div key={u.uid} className="flex items-center justify-between text-sm py-1.5">
-              <span className="font-mono">@{u.username}</span>
+            <div key={u.uid} className="flex min-w-0 items-center justify-between gap-3 text-sm py-1.5">
+              <span className="min-w-0 truncate font-mono">@{u.username}</span>
               <button
                 onClick={() => handleAdd(u.uid)}
                 disabled={busyUid === u.uid}
-                className="text-indigo font-medium hover:underline disabled:opacity-50"
+                className="flex-shrink-0 text-indigo font-medium hover:underline disabled:opacity-50"
               >
-                Compartir como {role === 'editor' ? 'editor' : 'lector'}
+                {busyUid === u.uid ? 'Compartiendo…' : `Compartir como ${role === 'editor' ? 'editor' : 'lector'}`}
               </button>
             </div>
           ))}
+          {hasSearched && !searching && results.length === 0 && !error && (
+            <p className="text-sm text-ink/50 py-1">No encontramos usuarios disponibles con ese nombre.</p>
+          )}
         </div>
 
         {memberUids.length > 0 && (
@@ -118,16 +137,16 @@ export default function ShareModal({ calendar, onClose }) {
             <h3 className="text-xs font-semibold text-ink/40 uppercase tracking-wide mb-2">Con acceso</h3>
             <div className="space-y-1 mb-4">
               {memberUids.map((uid) => (
-                <div key={uid} className="flex items-center justify-between text-sm py-1">
-                  <span className="text-ink/60 font-mono text-xs">
+                <div key={uid} className="flex min-w-0 items-center justify-between gap-3 text-sm py-1">
+                  <span className="min-w-0 truncate text-ink/60 font-mono text-xs">
                     {uid.slice(0, 8)}… · {members[uid]}
                   </span>
                   <button
                     onClick={() => handleRemove(uid)}
                     disabled={busyUid === uid}
-                    className="text-coral text-xs hover:underline"
+                    className="flex-shrink-0 text-coral text-xs hover:underline"
                   >
-                    Quitar
+                    {busyUid === uid ? 'Quitando…' : 'Quitar'}
                   </button>
                 </div>
               ))}

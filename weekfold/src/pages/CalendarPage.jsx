@@ -120,8 +120,8 @@ export default function CalendarPage() {
   return (
     <div className="min-h-screen bg-paper">
       <header className="bg-white border-b border-line">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2 sm:py-0 min-h-14 sm:h-16 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+          <div className="flex flex-1 min-w-0 items-center gap-3">
             <Link
               to="/"
               className="text-2xl text-ink/60 hover:text-ink"
@@ -132,7 +132,7 @@ export default function CalendarPage() {
             <span className="text-sm font-semibold text-ink truncate max-w-[200px]">{calendar.name}</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex w-full sm:w-auto items-center justify-end gap-2">
             <button
               onClick={() => setAnchorDate((d) => shiftWeek(d, -1))}
               className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-ink hover:border-ink transition"
