@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomUUID } from 'crypto'
 import { Timestamp } from 'firebase-admin/firestore'
-import { adminAuth, adminDb } from '../../lib/firebase-admin'
-import { createGoogleOAuthClient, GOOGLE_CALENDAR_SCOPE } from '../../lib/google'
+import { adminAuth, adminDb } from '../../lib/firebase-admin.js'
+import { createGoogleOAuthClient, GOOGLE_CALENDAR_SCOPE } from '../../lib/google.js'
 
 function getIdToken(request: VercelRequest) {
   const authorization = request.headers.authorization

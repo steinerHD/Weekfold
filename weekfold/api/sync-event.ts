@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { adminAuth, adminDb } from './lib/firebase-admin'
-import { createCalendarClient } from './lib/google'
-import { buildGoogleEvent } from './lib/event-resource'
+import { adminAuth, adminDb } from './lib/firebase-admin.js'
+import { createCalendarClient } from './lib/google.js'
+import { buildGoogleEvent } from './lib/event-resource.js'
 
 function getBearerToken(request: VercelRequest) {
   const authorization = request.headers.authorization
