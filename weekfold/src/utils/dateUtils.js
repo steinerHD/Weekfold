@@ -64,3 +64,28 @@ export function getOccurrenceForWeek(event, days) {
 export function expandEventsForWeek(events, days) {
   return events.map((ev) => getOccurrenceForWeek(ev, days)).filter(Boolean)
 }
+
+// Devuelve la próxima ocurrencia futura de un evento, incluyendo los que se
+// repiten semanalmente. Las ocurrencias se calculan en el cliente porque el
+// documento maestro conserva la fecha original del evento.
+export function getNextOccurrence(event, now = new Date()) {
+  if (event.start >= now) return event
+  if (!event.recurrence?.enabled) return null
+
+  const candidate = new Date(now)
+  candidate.setHours(event.start.getHours(), event.start.getMinutes(), 0, 0)
+
+  const daysUntilEvent = (event.start.getDay() - candidate.getDay() + 7) % 7
+  candidate.setDate(candidate.getDate() + daysUntilEvent)
+  if (candidate < now) candidate.setDate(candidate.getDate() + 7)
+
+  if (candidate < event.start) return null
+  if (event.recurrence.until && dateOnly(candidate) > dateOnly(event.recurrence.until)) return null
+
+  return {
+    ...event,
+    start: candidate,
+    end: new Date(candidate.getTime() + (event.end.getTime() - event.start.getTime())),
+    isRecurringInstance: true,
+  }
+}

@@ -40,7 +40,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    match /calendars/{calendarId} {
+      match /calendars/{calendarId} {
       allow read: if isMember(resource.data);
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
 
@@ -48,12 +48,40 @@ service cloud.firestore {
       allow update: if isOwner(resource.data);
       allow delete: if isOwner(resource.data);
 
-      match /events/{eventId} {
+        match /events/{eventId} {
         allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
         allow create, update, delete: if canEditEvents(
           get(/databases/$(database)/documents/calendars/$(calendarId)).data
         );
+        }
+
+        match /todoColumns/{columnId} {
+          allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
+          allow create, update, delete: if canEditEvents(
+            get(/databases/$(database)/documents/calendars/$(calendarId)).data
+          );
+        }
+
+        match /todoCards/{cardId} {
+          allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
+          allow create, update, delete: if canEditEvents(
+            get(/databases/$(database)/documents/calendars/$(calendarId)).data
+          );
+        }
+
+        match /todoMeta/{metaId} {
+          allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
+          allow create, update, delete: if canEditEvents(
+            get(/databases/$(database)/documents/calendars/$(calendarId)).data
+          );
+        }
+
+        match /todoHistory/{dayId} {
+          allow read: if isMember(get(/databases/$(database)/documents/calendars/$(calendarId)).data);
+          allow create, update, delete: if canEditEvents(
+            get(/databases/$(database)/documents/calendars/$(calendarId)).data
+          );
+        }
       }
-    }
   }
 }

@@ -136,6 +136,9 @@ export default function WeekView({ days, events, onSlotClick, onEventClick }) {
                                 hour12: true,
                               })}
                             </span>
+                            {ev.description && (
+                              <span className="hidden sm:block mt-0.5 truncate opacity-80">{ev.description}</span>
+                            )}
                           </button>
                         )
                       })}

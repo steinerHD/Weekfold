@@ -19,6 +19,7 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
   const { currentUser, profile } = useAuth()
 
   const [title, setTitle] = useState(initialEvent?.title || '')
+  const [description, setDescription] = useState(initialEvent?.description || '')
   const [selectedDay, setSelectedDay] = useState(
     days.find((d) => isSameDay(d, initialEvent.start)) || days[0],
   )
@@ -58,6 +59,7 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
     try {
       const payload = {
         title: title.trim() || 'Sin título',
+        description: description.trim(),
         start,
         end,
         color,
@@ -102,7 +104,7 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
 
   return (
     <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto p-6">
         <div className="flex items-start justify-between mb-4">
           <h2 className="font-display italic text-xl font-semibold text-ink">
             {isNew ? 'Nuevo evento' : canEdit ? 'Editar evento' : 'Evento'}
@@ -123,6 +125,25 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
               onChange={(e) => setTitle(e.target.value)}
               className="w-full rounded-lg border border-indigo/40 px-3.5 py-2.5 text-sm disabled:bg-paper focus:outline-none focus:ring-2 focus:ring-indigo"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-ink mb-1.5" htmlFor="event-description">
+              Descripción
+            </label>
+            <textarea
+              id="event-description"
+              disabled={!canEdit}
+              rows="3"
+              maxLength="500"
+              placeholder="Agrega información importante para este evento…"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full resize-none rounded-lg border border-indigo/40 px-3.5 py-2.5 text-sm disabled:bg-paper focus:outline-none focus:ring-2 focus:ring-indigo"
+            />
+            {canEdit && (
+              <p className="mt-1 text-right text-[11px] text-ink/40">{description.length}/500</p>
+            )}
           </div>
 
           <div>

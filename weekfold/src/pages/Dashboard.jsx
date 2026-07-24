@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Navbar from '../components/Navbar.jsx'
 import CalendarCard from '../components/CalendarCard.jsx'
 import CreateCalendarModal from '../components/CreateCalendarModal.jsx'
+import UpcomingEventNotice from '../components/UpcomingEventNotice.jsx'
 import { useCalendars } from '../hooks/useCalendars.js'
 import { useAuth } from '../context/AuthContext.jsx'
 
@@ -11,6 +12,7 @@ export default function Dashboard({ isDark, onToggleTheme }) {
   const [showCreate, setShowCreate] = useState(false)
 
   const hasAny = mine.length > 0 || sharedWithMe.length > 0
+  const calendars = [...mine, ...sharedWithMe]
 
   return (
     <div className="min-h-screen bg-paper">
@@ -68,6 +70,7 @@ export default function Dashboard({ isDark, onToggleTheme }) {
       </main>
 
       {showCreate && <CreateCalendarModal onClose={() => setShowCreate(false)} />}
+      {!loading && <UpcomingEventNotice calendars={calendars} />}
     </div>
   )
 }

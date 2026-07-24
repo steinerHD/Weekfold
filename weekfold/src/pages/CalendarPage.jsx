@@ -7,6 +7,7 @@ import WeekView from '../components/WeekView.jsx'
 import EventModal from '../components/EventModal.jsx'
 import ShareModal from '../components/ShareModal.jsx'
 import ConfirmCard from '../components/ConfirmCard.jsx'
+import TodoBoard from '../components/TodoBoard.jsx'
 import { getWeekDays, shiftWeek, formatWeekRange, expandEventsForWeek } from '../utils/dateUtils'
 import { DEFAULT_COLOR } from '../utils/palette'
 
@@ -22,6 +23,7 @@ export default function CalendarPage() {
   const [showShare, setShowShare] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deletingCalendar, setDeletingCalendar] = useState(false)
+  const [activeSection, setActiveSection] = useState('calendar')
 
   useEffect(() => {
     const unsub = onSnapshot(
@@ -132,7 +134,7 @@ export default function CalendarPage() {
             <span className="text-sm font-semibold text-ink truncate max-w-[200px]">{calendar.name}</span>
           </div>
 
-          <div className="flex w-full sm:w-auto items-center justify-end gap-2">
+          <div className="flex w-full sm:w-auto flex-wrap items-center justify-end gap-2">
             <button
               onClick={() => setAnchorDate((d) => shiftWeek(d, -1))}
               className="w-9 h-9 rounded-md border border-line text-ink/70 hover:text-ink hover:border-ink transition"
@@ -155,6 +157,20 @@ export default function CalendarPage() {
               ›
             </button>
             <span className="hidden sm:inline text-xs font-mono text-ink/60 w-40 text-center truncate">{formatWeekRange(days)}</span>
+            <button
+              type="button"
+              onClick={() => setActiveSection('calendar')}
+              className={`rounded-md px-2 py-1.5 text-xs font-medium transition ${activeSection === 'calendar' ? 'bg-indigo text-white' : 'border border-line text-ink/60 hover:bg-paper'}`}
+            >
+              Calendario
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSection('tasks')}
+              className={`rounded-md px-2 py-1.5 text-xs font-medium transition ${activeSection === 'tasks' ? 'bg-indigo text-white' : 'border border-line text-ink/60 hover:bg-paper'}`}
+            >
+              Tareas
+            </button>
             <button
               onClick={handleNewEventClick}
               disabled={!canEdit}
@@ -191,12 +207,16 @@ export default function CalendarPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-6">
-        <WeekView
-          days={days}
-          events={visibleEvents}
-          onSlotClick={handleSlotClick}
-          onEventClick={(ev) => setActiveEvent(ev)}
-        />
+        {activeSection === 'calendar' ? (
+          <WeekView
+            days={days}
+            events={visibleEvents}
+            onSlotClick={handleSlotClick}
+            onEventClick={(ev) => setActiveEvent(ev)}
+          />
+        ) : (
+          <TodoBoard calendarId={calendarId} events={masterEvents} canEdit={canEdit} />
+        )}
       </main>
 
       {activeEvent && (
