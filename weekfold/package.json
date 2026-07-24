@@ -4,13 +4,16 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 5173 --strictPort",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/node": "^5.8.26",
     "date-fns": "^3.6.0",
     "firebase": "^10.14.1",
+    "firebase-admin": "^14.2.0",
+    "googleapis": "^173.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0"

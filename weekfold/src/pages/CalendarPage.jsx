@@ -8,6 +8,7 @@ import EventModal from '../components/EventModal.jsx'
 import ShareModal from '../components/ShareModal.jsx'
 import ConfirmCard from '../components/ConfirmCard.jsx'
 import TodoBoard from '../components/TodoBoard.jsx'
+import GoogleCalendarConnectButton from '../components/GoogleCalendarConnectButton.jsx'
 import { getWeekDays, shiftWeek, formatWeekRange, expandEventsForWeek } from '../utils/dateUtils'
 import { DEFAULT_COLOR } from '../utils/palette'
 
@@ -171,6 +172,7 @@ export default function CalendarPage() {
             >
               Tareas
             </button>
+            <GoogleCalendarConnectButton calendarId={calendarId} />
             <button
               onClick={handleNewEventClick}
               disabled={!canEdit}

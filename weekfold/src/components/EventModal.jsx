@@ -5,6 +5,7 @@ import ConfirmCard from './ConfirmCard.jsx'
 import { formatDayLabel, isSameDay } from '../utils/dateUtils'
 import { PALETTE, DEFAULT_COLOR } from '../utils/palette'
 import { useAuth } from '../context/AuthContext.jsx'
+import { syncEventWithGoogle } from '../utils/googleCalendarSync.js'
 
 const MINUTES = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
 const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
@@ -69,12 +70,14 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
         },
       }
       if (isNew) {
-        await addDoc(collection(db, 'calendars', calendarId, 'events'), {
+        const createdEvent = await addDoc(collection(db, 'calendars', calendarId, 'events'), {
           ...payload,
           createdAt: serverTimestamp(),
         })
+        void syncEventWithGoogle(currentUser, calendarId, createdEvent.id, 'create')
       } else {
         await updateDoc(doc(db, 'calendars', calendarId, 'events', initialEvent.id), payload)
+        void syncEventWithGoogle(currentUser, calendarId, initialEvent.id, 'update')
       }
       onClose()
     } catch (err) {
@@ -88,6 +91,7 @@ export default function EventModal({ calendarId, days, initialEvent, canEdit, on
     setBusy(true)
     try {
       await deleteDoc(doc(db, 'calendars', calendarId, 'events', initialEvent.id))
+      void syncEventWithGoogle(currentUser, calendarId, initialEvent.id, 'delete')
       onClose()
     } finally {
       setBusy(false)
