@@ -14,6 +14,7 @@
     "firebase": "^10.14.1",
     "firebase-admin": "^14.2.0",
     "googleapis": "^173.0.0",
+    "jose": "4.15.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0"
@@ -24,5 +25,8 @@
     "postcss": "^8.4.41",
     "tailwindcss": "^3.4.10",
     "vite": "^5.4.1"
+  },
+  "overrides": {
+    "jose": "4.15.9"
   }
 }
