@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FieldValue, Timestamp } from 'firebase-admin/firestore'
-import { adminDb } from '../../lib/firebase-admin'
-import { createCalendarClient, createGoogleOAuthClient } from '../../lib/google'
-import { buildGoogleEvent } from '../../lib/event-resource'
+import { adminDb } from '../../lib/firebase-admin.js'
+import { createCalendarClient, createGoogleOAuthClient } from '../../lib/google.js'
+import { buildGoogleEvent } from '../../lib/event-resource.js'
 
 export default async function handler(request: VercelRequest, response: VercelResponse) {
   if (request.method !== 'GET') {
@@ -34,7 +34,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
     await integrationRef.set({ refreshToken, connectedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true })
     const calendarMappingRef = integrationRef.collection('calendarMappings').doc(calendarId)
-    let calendarMapping = (await calendarMappingRef.get()).data()
+    let calendarMapping: { googleCalendarId?: string } | undefined = (await calendarMappingRef.get()).data() as { googleCalendarId?: string } | undefined
     const localCalendar = await adminDb.collection('calendars').doc(calendarId).get()
     if (!localCalendar.exists || !localCalendar.data()?.memberIds?.includes(uid)) {
       return response.status(403).send('No tienes acceso a este calendario.')
@@ -55,13 +55,14 @@ export default async function handler(request: VercelRequest, response: VercelRe
         requestBody,
       })
 
-      const accessTokenResult = await calendarClient.auth.getAccessToken()
+      oauth2Client.setCredentials({ refresh_token: refreshToken })
+      const accessTokenResult = await oauth2Client.getAccessToken()
       console.log('[Google OAuth] Google access token ready', {
         uid,
         calendarId,
         hasAccessToken: Boolean(accessTokenResult.token),
-        expiryDate: calendarClient.auth.credentials.expiry_date,
-        tokenType: calendarClient.auth.credentials.token_type,
+        expiryDate: oauth2Client.credentials.expiry_date,
+        tokenType: oauth2Client.credentials.token_type,
       })
 
       const createdCalendar = await calendarClient.calendars.insert({ requestBody })
@@ -102,7 +103,7 @@ export default async function handler(request: VercelRequest, response: VercelRe
 
       const events = await localCalendar.ref.collection('events').get()
       await Promise.all(events.docs.map(async (event) => {
-        const createdEvent = await calendarClient.events.insert({ calendarId: calendarMapping.googleCalendarId, requestBody: buildGoogleEvent(event.data()) })
+        const createdEvent = await calendarClient.events.insert({ calendarId: googleCalendarId, requestBody: buildGoogleEvent(event.data()) })
         if (createdEvent.data.id) {
           await calendarMappingRef.collection('eventMappings').doc(event.id).set({ googleEventId: createdEvent.data.id, eventPath: event.ref.path })
         }
